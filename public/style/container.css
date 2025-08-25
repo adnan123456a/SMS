@@ -1,0 +1,114 @@
+
+body {
+            margin: 0;
+            color: white;
+            padding: 0;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        h3 {
+            font-family: monospace;
+            background: rgba(31, 30, 30, 0.616);
+            color: rgb(253, 225, 225);
+        }
+        p {
+            font-size: 13px;
+            font-family: monospace;
+        }
+        .hisMsge  , .myMsge{
+            background-color: rgb(18, 18, 20);
+            width: fit-content;
+            margin:10px;
+            min-width: 200px;
+            border-radius: 10px;
+            max-width: 250px;
+            padding: 6px;
+        }
+        .container {
+            position: absolute;
+            top: 0;
+            border-radius: 10px;
+            bottom: 0;
+            background-color: rgba(12, 12, 12, 0.664);
+            width: 600px;
+        }
+        .msge-sender-box {
+            position: absolute;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgb(43, 41, 41);
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            height: 50px;
+            bottom: 0;
+            border-top: 1px solid rgba(89, 89, 109, 0.438);
+            column-gap: 10px;
+        }
+        .hisDis {
+            display: flex;
+            justify-content: start;
+            width: 100%;
+        }
+        .myMsge {
+            background-color: rgb(24, 23, 22);
+        }
+        .myDiv {
+            display: flex;
+            justify-content: end;
+            width: 100%;
+        }
+        input {
+            height: 30px;
+            width: 250px;
+            border-radius: 15px;
+            outline: 0;
+            border: 0;
+            padding-left: 15px;
+        }
+        button {
+            color: white;
+            background: green;
+            border: 0;
+            border-radius: 5px;
+            height: 30px;
+            padding-left:10px ;
+            padding-right: 10px;
+            cursor: pointer;
+            transition: all 20s;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        button:active {
+            opacity: 0.7;
+        }
+.msge-container {
+    height: 80%;
+    margin-top:50px;
+    overflow: scroll;
+}
+.header {
+    top: 0;
+    position: absolute;
+    height: 50px;
+right: 0;
+border-bottom-left-radius: 10px;
+border-bottom-right-radius: 10px;
+background-color: rgb(43, 41, 41);
+left: 0;
+border-bottom: 1px solid  rgba(89, 89, 109, 0.438);
+    display: flex;
+    align-items: center;
+justify-content: center;
+}
+.header p {
+    color: rgb(214, 214, 214);
+    background-color: none;
+    font-weight: bolder;
+    font-size: 25px; 
+    font-family: Gruppo;
+}
