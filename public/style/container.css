@@ -89,7 +89,7 @@ body {
 .msge-container {
     height: 80%;
     margin-top:50px;
-    overflow: scroll;
+    overflow-y: scroll;
 }
 .header {
     top: 0;
