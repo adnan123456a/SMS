@@ -7,7 +7,7 @@ const{ Server } = require('socket.io')
 const io = new Server(server);
 
 //socket
-
+const port = process.env.PORT || 8080
 io.on('connection',(socket)=>{
 //    console.log(`A New Got Connected :- ${socket.id}`)
     socket.on('user-message',txt=>{
@@ -18,7 +18,7 @@ io.on('connection',(socket)=>{
 
 app.use(express.static(path.join(__dirname,"public")))
 
-server.listen(3000,()=>{
+server.listen(port,()=>{
     console.log("Server is listening localhost:3000")
 })
 
