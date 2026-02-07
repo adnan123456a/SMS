@@ -6,12 +6,30 @@ let currentUser = null;
 let currentRoom = null;
 let currentRoomId = null;
 let allRooms = [];
+let isLoginMode = true;
 
 // DOM Elements
 const authSection = document.getElementById('authSection');
 const mainSection = document.getElementById('mainSection');
-const usernameInput = document.getElementById('usernameInput');
-const joinBtn = document.getElementById('joinBtn');
+
+// Login Form Elements
+const loginForm = document.getElementById('loginForm');
+const loginUsernameInput = document.getElementById('loginUsername');
+const loginPasswordInput = document.getElementById('loginPassword');
+const loginBtn = document.getElementById('loginBtn');
+const loginErrorMsg = document.getElementById('loginError');
+const toRegisterBtn = document.getElementById('showRegisterBtn');
+
+// Register Form Elements
+const registerForm = document.getElementById('registerForm');
+const registerUsernameInput = document.getElementById('regUsername');
+const registerEmailInput = document.getElementById('regEmail');
+const registerPasswordInput = document.getElementById('regPassword');
+const registerBtn = document.getElementById('registerBtn');
+const registerErrorMsg = document.getElementById('registerError');
+const toLoginBtn = document.getElementById('showLoginBtn');
+
+// Chat Elements
 const roomList = document.getElementById('roomList');
 const createRoomBtn = document.getElementById('createRoomBtn');
 const roomModal = document.getElementById('roomModal');
@@ -24,20 +42,231 @@ const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const currentRoomName = document.getElementById('currentRoomName');
 const userCount = document.getElementById('userCount');
+const userMenu = document.getElementById('userMenuBtn');
+const userDropdown = document.getElementById('userDropdown');
+const userAvatar = document.getElementById('userMenuBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const userInfoDiv = document.getElementById('userInfo');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-  loadChatRooms();
+  checkAuthStatus();
   setupEventListeners();
+  loadChatRooms();
+});
+
+// Check if user is already authenticated
+async function checkAuthStatus() {
+  try {
+    const response = await fetch('/api/auth/me', {
+      credentials: 'include'
+    });
+    
+    if (response.ok) {
+      const user = await response.json();
+      currentUser = user;
+      showChatSection();
+      loadChatRooms();
+    } else {
+      showAuthSection();
+    }
+  } catch (error) {
+    console.error('Error checking auth status:', error);
+    showAuthSection();
+  }
+}
+
+// Show/Hide Sections
+function showAuthSection() {
+  authSection.style.display = 'flex';
+  mainSection.style.display = 'none';
+}
+
+function showChatSection() {
+  authSection.style.display = 'none';
+  mainSection.style.display = 'flex';
+  updateUserDisplay();
+}
+
+// Update user display in header
+function updateUserDisplay() {
+  if (currentUser && userInfoDiv) {
+    const userInitial = currentUser.username ? currentUser.username[0].toUpperCase() : '?';
+    userAvatar.textContent = userInitial;
+    userInfoDiv.innerHTML = `
+      <strong>${currentUser.username || 'Unknown'}</strong>
+      <small>${currentUser.email || 'No email'}</small>
+    `;
+  }
+}
+
+// Toggle between login and register forms
+function toggleAuthMode(isLogin) {
+  isLoginMode = isLogin;
+  if (isLogin) {
+    loginForm.style.display = 'block';
+    registerForm.style.display = 'none';
+  } else {
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'block';
+  }
+}
+
+// Handle Login
+async function handleLogin(e) {
+  e.preventDefault();
+  loginErrorMsg.textContent = '';
+  
+  const username = loginUsernameInput.value.trim();
+  const password = loginPasswordInput.value.trim();
+
+  if (!username || !password) {
+    loginErrorMsg.textContent = 'Username and password are required';
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+      credentials: 'include'
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      currentUser = data.user;
+      localStorage.setItem('chatUsername', username);
+      loginUsernameInput.value = '';
+      loginPasswordInput.value = '';
+      showChatSection();
+      loadChatRooms();
+    } else {
+      loginErrorMsg.textContent = data.message || 'Login failed';
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    loginErrorMsg.textContent = 'An error occurred. Please try again.';
+  }
+}
+
+// Handle Register
+async function handleRegister(e) {
+  e.preventDefault();
+  registerErrorMsg.textContent = '';
+
+  const username = registerUsernameInput.value.trim();
+  const email = registerEmailInput.value.trim();
+  const password = registerPasswordInput.value.trim();
+
+  if (!username || !email || !password) {
+    registerErrorMsg.textContent = 'All fields are required';
+    return;
+  }
+
+  if (username.length < 2) {
+    registerErrorMsg.textContent = 'Username must be at least 2 characters';
+    return;
+  }
+
+  if (password.length < 6) {
+    registerErrorMsg.textContent = 'Password must be at least 6 characters';
+    return;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    registerErrorMsg.textContent = 'Please enter a valid email address';
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email, password }),
+      credentials: 'include'
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      currentUser = data.user;
+      localStorage.setItem('chatUsername', username);
+      registerUsernameInput.value = '';
+      registerEmailInput.value = '';
+      registerPasswordInput.value = '';
+      showChatSection();
+      loadChatRooms();
+    } else {
+      registerErrorMsg.textContent = data.message || 'Registration failed';
+    }
+  } catch (error) {
+    console.error('Register error:', error);
+    registerErrorMsg.textContent = 'An error occurred. Please try again.';
+  }
+}
+
+// Handle Logout
+async function handleLogout() {
+  try {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include'
+    });
+
+    currentUser = null;
+    localStorage.removeItem('chatUsername');
+    toggleAuthMode(true);
+    showAuthSection();
+    loginUsernameInput.value = '';
+    loginPasswordInput.value = '';
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+}
+
+// Toggle User Dropdown Menu
+function toggleUserDropdown() {
+  userDropdown.classList.toggle('active');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (userMenu && !userMenu.contains(e.target) && userDropdown && !userDropdown.contains(e.target)) {
+    userDropdown.classList.remove('active');
+  }
 });
 
 // Event Listeners
 function setupEventListeners() {
-  joinBtn.addEventListener('click', handleJoin);
-  usernameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleJoin();
+  // Auth form toggles
+  toRegisterBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleAuthMode(false);
   });
 
+  toLoginBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleAuthMode(true);
+  });
+
+  // Login form
+  loginBtn.addEventListener('click', handleLogin);
+  loginForm.addEventListener('submit', handleLogin);
+  loginPasswordInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleLogin(e);
+  });
+
+  // Register form
+  registerBtn.addEventListener('click', handleRegister);
+  registerForm.addEventListener('submit', handleRegister);
+  registerPasswordInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleRegister(e);
+  });
+
+  // Chat events
   createRoomBtn.addEventListener('click', () => {
     roomModal.style.display = 'block';
     roomNameInput.focus();
@@ -66,28 +295,10 @@ function setupEventListeners() {
   });
 
   sendBtn.addEventListener('click', handleSendMessage);
-}
 
-// Handle User Join
-function handleJoin() {
-  const username = usernameInput.value.trim();
-
-  if (!username || username.length < 2) {
-    alert('Username must be at least 2 characters');
-    return;
-  }
-
-  currentUser = {
-    username,
-    avatar: generateAvatar(username)
-  };
-
-  // Emit user join to socket
-  socket.emit('userJoin', currentUser);
-
-  // Show main section
-  authSection.style.display = 'none';
-  mainSection.style.display = 'flex';
+  // User menu
+  userAvatar?.addEventListener('click', toggleUserDropdown);
+  logoutBtn?.addEventListener('click', handleLogout);
 }
 
 // Load Chat Rooms
@@ -132,6 +343,9 @@ function selectRoom(room) {
 
   currentRoom = room;
   currentRoomId = room._id;
+
+  // Update URL to /chat/:roomName
+  window.history.pushState({}, document.title, `/chat/${room.name}`);
 
   // Update UI
   currentRoomName.textContent = `# ${room.name}`;
@@ -193,8 +407,9 @@ async function handleCreateRoom() {
       body: JSON.stringify({
         name,
         description,
-        createdBy: currentUser.username // In production, use actual user ID
-      })
+        createdBy: currentUser._id || currentUser.username
+      }),
+      credentials: 'include'
     });
 
     if (!response.ok) {
@@ -232,9 +447,9 @@ function handleSendMessage() {
   socket.emit('sendMessage', {
     roomId: currentRoomId,
     roomName: currentRoom.name,
-    senderId: currentUser.username,
+    senderId: currentUser._id || currentUser.username,
     senderName: currentUser.username,
-    senderAvatar: currentUser.avatar,
+    senderAvatar: currentUser.profilePicture || generateAvatar(currentUser.username),
     message
   });
 

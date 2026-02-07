@@ -3,6 +3,8 @@ const http = require('http');
 const path = require("path");
 const mongoose = require('mongoose');
 const cors = require('cors');
+const session = require('express-session');
+const { default: MongoStore } = require('connect-mongo');
 require('dotenv').config();
 
 // Models
@@ -13,6 +15,7 @@ const Message = require('./models/Message');
 // Routes
 const chatRoomsRouter = require('./routes/chatRooms');
 const messagesRouter = require('./routes/messages');
+const authRouter = require('./routes/auth');
 
 const app = express();
 const server = http.createServer(app);
@@ -24,24 +27,38 @@ const io = new Server(server, {
   }
 });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
-
-// MongoDB Connection
+// MongoDB Connection (for sessions)
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/chat-app';
 
-mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
+mongoose.connect(MONGO_URI).then(() => {
   console.log('✅ MongoDB connected');
 }).catch(err => {
   console.error('❌ MongoDB connection error:', err);
 });
 
+// Session Configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+  store: new MongoStore({
+    mongoUrl: MONGO_URI,
+    touchAfter: 24 * 3600
+  }),
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production'
+  }
+}));
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+
 // REST APIs
+app.use('/api/auth', authRouter);
 app.use('/api/chatrooms', chatRoomsRouter);
 app.use('/api/messages', messagesRouter);
 
@@ -92,10 +109,27 @@ io.on('connection', (socket) => {
         return;
       }
 
+      // Find or create user
+      let user = await User.findOne({ username: senderName });
+      if (!user) {
+        user = new User({
+          username: senderName,
+          email: `${senderName}@chat.local`,
+          avatarUrl: senderAvatar,
+          profilePicture: senderAvatar
+        });
+        await user.save();
+      } else {
+        // Update avatar if changed
+        user.avatarUrl = senderAvatar;
+        user.profilePicture = senderAvatar;
+        await user.save();
+      }
+
       // Save to MongoDB
       const newMessage = new Message({
         roomId,
-        senderId,
+        senderId: user._id,
         senderName,
         senderAvatar,
         message: message.trim()
@@ -111,7 +145,7 @@ io.on('connection', (socket) => {
       // Broadcast to room
       io.to(roomName).emit('receiveMessage', {
         _id: newMessage._id,
-        senderId,
+        senderId: user._id,
         senderName,
         senderAvatar,
         message: newMessage.message,
@@ -149,8 +183,9 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.get("/chat", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "chat.html"));
+// Handle chat room routing
+app.get("/chat/:roomName", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // Fallback for SPA

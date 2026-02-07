@@ -18,13 +18,28 @@ router.post('/', async (req, res) => {
       return res.status(409).json({ error: 'Room name already exists' });
     }
 
+    // Create or find user by username
+    let user = await User.findOne({ username: createdBy });
+    if (!user) {
+      user = new User({
+        username: createdBy,
+        email: `${createdBy}@chat.local`,
+        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${createdBy}`
+      });
+      await user.save();
+    }
+
     const newRoom = new ChatRoom({
       name: name.toLowerCase().trim(),
       description,
-      createdBy
+      createdBy: user._id
     });
 
     await newRoom.save();
+    
+    // Populate before sending response
+    await newRoom.populate('createdBy', 'username avatarUrl');
+    
     res.status(201).json(newRoom);
   } catch (error) {
     res.status(500).json({ error: error.message });
