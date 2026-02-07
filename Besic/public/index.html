@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌸 Anime Chat Room 🌸</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Animated background particles */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .sakura {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, #ffb7d5 0%, #ff9ec5 100%);
+            border-radius: 50% 0 50% 0;
+            opacity: 0.7;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+
+        /* Login Screen */
+        #login-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 50px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            z-index: 1;
+            backdrop-filter: blur(10px);
+            max-width: 400px;
+        }
+
+        #login-container h1 {
+            font-size: 2.5em;
+            color: #667eea;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #login-container p {
+            color: #764ba2;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        #username-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1em;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s;
+        }
+
+        #username-input:focus {
+            outline: none;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        #join-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        #join-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(118, 75, 162, 0.4);
+        }
+
+        /* Chat Container */
+        #chat-container {
+            display: none;
+            width: 95%;
+            max-width: 1200px;
+            height: 90vh;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            z-index: 1;
+            display: none;
+            flex-direction: column;
+        }
+
+        #chat-container.active {
+            display: flex;
+        }
+
+        /* Header */
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-header h2 {
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .online-count {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        /* Messages Area */
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            background: linear-gradient(to bottom, #f8f9ff 0%, #fff 100%);
+        }
+
+        #messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        #messages::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        /* Message Styles */
+        .message {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 3px solid #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .username {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 1em;
+        }
+
+        .timestamp {
+            font-size: 0.8em;
+            color: #999;
+        }
+
+        .message-text {
+            background: white;
+            padding: 12px 18px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            line-height: 1.5;
+            color: #333;
+        }
+
+        /* System Messages */
+        .system-message {
+            text-align: center;
+            color: #764ba2;
+            font-size: 0.9em;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+
+        /* Typing Indicator */
+        #typing-indicator {
+            padding: 10px 30px;
+            font-size: 0.9em;
+            color: #667eea;
+            font-style: italic;
+            min-height: 30px;
+        }
+
+        .typing-dots {
+            display: inline-block;
+        }
+
+        .typing-dots span {
+            animation: blink 1.4s infinite;
+            display: inline-block;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes blink {
+            0%, 60%, 100% {
+                opacity: 1;
+            }
+            30% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Input Area */
+        .chat-input {
+            display: flex;
+            padding: 20px 30px;
+            background: white;
+            border-top: 2px solid #f0f0f0;
+            gap: 15px;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            font-size: 1em;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s;
+        }
+
+        #message-input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 15px rgba(118, 75, 162, 0.2);
+        }
+
+        #send-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        #send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(118, 75, 162, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #chat-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            #login-container {
+                padding: 30px;
+            }
+
+            .chat-header h2 {
+                font-size: 1.3em;
+            }
+
+            #messages {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Animation -->
+    <div class="bg-animation" id="bg-animation"></div>
+
+    <!-- Login Screen -->
+    <div id="login-container">
+        <h1>🌸 Anime Chat 🌸</h1>
+        <p>Enter the kawaii chat room!</p>
+        <input type="text" id="username-input" placeholder="Enter your name..." maxlength="20" autocomplete="off">
+        <button id="join-btn">Join Chat Room ✨</button>
+    </div>
+
+    <!-- Chat Container -->
+    <div id="chat-container">
+        <div class="chat-header">
+            <h2>🌸 Anime Chat Room</h2>
+            <div class="online-count">
+                <span id="user-count">0</span> online
+            </div>
+        </div>
+
+        <div id="messages"></div>
+        
+        <div id="typing-indicator"></div>
+
+        <div class="chat-input">
+            <input type="text" id="message-input" placeholder="Type your message..." autocomplete="off">
+            <button id="send-btn">Send 💌</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let username = '';
+        let typingTimer;
+
+        // Create animated background
+        function createSakura() {
+            const bgAnimation = document.getElementById('bg-animation');
+            for (let i = 0; i < 20; i++) {
+                const sakura = document.createElement('div');
+                sakura.className = 'sakura';
+                sakura.style.left = Math.random() * 100 + '%';
+                sakura.style.animationDuration = (Math.random() * 3 + 5) + 's';
+                sakura.style.animationDelay = Math.random() * 5 + 's';
+                bgAnimation.appendChild(sakura);
+            }
+        }
+        createSakura();
+
+        // Login functionality
+        const loginContainer = document.getElementById('login-container');
+        const chatContainer = document.getElementById('chat-container');
+        const usernameInput = document.getElementById('username-input');
+        const joinBtn = document.getElementById('join-btn');
+
+        function joinChat() {
+            username = usernameInput.value.trim();
+            if (username) {
+                socket.emit('user joined', username);
+                loginContainer.style.display = 'none';
+                chatContainer.classList.add('active');
+                document.getElementById('message-input').focus();
+            }
+        }
+
+        joinBtn.addEventListener('click', joinChat);
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinChat();
+        });
+
+        // Get avatar URL
+        function getAvatarUrl(avatarNum) {
+            const colors = ['FF6B9D', '667eea', 'FFA500', '20E3B2', 'F368E0', '00D2FF', 'FFD93D', 'A8E6CF'];
+            return `https://ui-avatars.com/api/?name=${avatarNum}&background=${colors[avatarNum - 1]}&color=fff&size=100&bold=true`;
+        }
+
+        // Display messages
+        const messagesDiv = document.getElementById('messages');
+
+        function addMessage(data) {
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message';
+            messageEl.innerHTML = `
+                <img src="${getAvatarUrl(data.avatar)}" alt="avatar" class="avatar">
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="username">${data.username}</span>
+                        <span class="timestamp">${data.timestamp}</span>
+                    </div>
+                    <div class="message-text">${escapeHtml(data.message)}</div>
+                </div>
+            `;
+            messagesDiv.appendChild(messageEl);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function addSystemMessage(text) {
+            const messageEl = document.createElement('div');
+            messageEl.className = 'system-message';
+            messageEl.textContent = text;
+            messagesDiv.appendChild(messageEl);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Send messages
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                socket.emit('chat message', message);
+                messageInput.value = '';
+                socket.emit('stop typing');
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Typing indicator
+        messageInput.addEventListener('input', () => {
+            socket.emit('typing');
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                socket.emit('stop typing');
+            }, 1000);
+        });
+
+        // Socket events
+        socket.on('chat message', (data) => {
+            addMessage(data);
+        });
+
+        socket.on('user joined', (data) => {
+            addSystemMessage(`✨ ${data.username} joined the chat!`);
+            document.getElementById('user-count').textContent = data.userCount;
+        });
+
+        socket.on('user left', (data) => {
+            addSystemMessage(`👋 ${data.username} left the chat`);
+            document.getElementById('user-count').textContent = data.userCount;
+        });
+
+        socket.on('user list', (users) => {
+            document.getElementById('user-count').textContent = users.length;
+        });
+
+        const typingIndicator = document.getElementById('typing-indicator');
+        socket.on('typing', (username) => {
+            typingIndicator.innerHTML = `${username} is typing<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>`;
+        });
+
+        socket.on('stop typing', () => {
+            typingIndicator.innerHTML = '';
+        });
+    </script>
+</body>
+</html>
